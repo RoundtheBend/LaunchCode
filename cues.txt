@@ -1,0 +1,4 @@
+cuenum,cuetime,firelength,board,name,img,imgloc
+1,1,15,3,shotsfired1,pic1.png,pic1_lg.png
+2,1,15,4,shotsfired2,pic2.png,pic2_lg.png
+3,15,57,1,oblivion,oblivion.png,oblivion_lg.png
