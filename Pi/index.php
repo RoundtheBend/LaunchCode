@@ -127,7 +127,7 @@
 				
 				xhr.open("GET", "serial.php?req=[S]", true);
 				xhr.send(null);
-				setTimeout(getStatus, 1000);
+				setTimeout(getStatus, 30000);
 			}
 			
 			function setCurrent(id) {

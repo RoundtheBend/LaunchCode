@@ -45,7 +45,7 @@ $serial->_exec("stty -F /dev/ttyAMA0 -icanon", $out);
 
 // range of where to send
 $destbegin = 0;
-$destend = 1;
+$destend = 3;
 
 // for launch command map to a device and index, reformat message
 $cmdcode = $cmdstr[0];
@@ -54,6 +54,7 @@ if ($cmdcode === 'L')
 	$cmdval = intval(substr($cmdstr, 1));
 	$destend = $destbegin = (int) ($cmdval / 20);
 	$outstr = "[L" . strval($cmdval % 20) . "]"; 
+	$reqlen = strlen($outstr) + 14;
 }
 
 $response = "";
@@ -73,6 +74,8 @@ for ($d = $destbegin; $d <= $destend; $d++)
 	$out .= $outstr;
 
 	$sum = 0;
+//echo "Strlen " . strlen($out) . " reqlen " . $reqlen . " [" . bin2hex($out) . "]\n";
+//return;
 	for ($i = 3; $i < $reqlen + 3; $i++)
 	{
 		$sum += ord($out[$i]);
@@ -85,6 +88,7 @@ for ($d = $destbegin; $d <= $destend; $d++)
 	// wait for reply
 	$inbuf = '';
 	$done = false;
+	$timestart = time();
 	do {
 		$datain = $serial->readPort(); 
 		if ($datain) $inbuf .= $datain;
@@ -118,7 +122,7 @@ for ($d = $destbegin; $d <= $destend; $d++)
 			if ($d != $destend) $response .= ",";
 			$done = true; // got our response
 		}
-	} while (!$done);
+	} while (!$done && (time() - $timestart < 10));
 }
 //echo bin2hex($instr);
 echo $response;
