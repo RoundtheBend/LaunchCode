@@ -1,0 +1,234 @@
+<!DOCTYPE HTML>
+<html itemscope itemtype="https://schema.org/Article">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <script src="jquery.min.js"></script>
+  <title>Fireworks!</title>
+  <style type="text/css">
+    body {
+      color: white;
+      background-color: black;
+    }
+    #header {
+      width: 100%;
+      text-align: center;
+    }
+    #header > div {
+    }
+    #name {
+      font-weight: bolder;
+      font-size: large;               
+    }
+    .left {
+      float: left;
+    }
+    .center {
+      display: inline-block;
+      margin: auto;
+    }
+    .right {
+      float: right;
+    }
+    .clear {
+      clear: both;
+    }
+    .cue {
+      display: inline-block;
+      text-align: center;
+      float: left;
+      width: 100px;
+      height: 120px;
+    }
+    .select {
+      width: 64px;
+      height: 64px;           
+      margin: auto;
+      background-color: white;
+    }
+    .status-good > .select {
+      background-color: green;
+    }
+    .status-bad > .select {
+      background-color: red;
+    }
+    .name {
+      position: absolute;
+      font-size: 24px;
+      font-weight: bold;
+      text-shadow: black 0.1em 0.1em 0.2em;
+      color: white;
+      padding-left: 3px;
+      padding-top: 1px;
+    }
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <script type="text/javascript">
+    var selected = -1;
+    var cueStatus = {};
+    var showStatus = {};
+    function fire() {
+      if (selected != -1) {
+        $.ajax({
+          type: 'POST',
+          url: '//' + window.location.hostname + ':8080/action/fire',
+          data: JSON.stringify({'cue': selected})
+        });
+        selected = -1; 
+      }
+    }
+    function select(cue) {
+      selected = cue;
+      $('#name').html(cueStatus[cue]['name']);
+      $('#status').html(adcToStatus(cueStatus[cue]['adc']));
+      $('#adc').html(cueStatus[cue]['adc']);
+    }
+    function getStatus() {
+      $.ajax({
+        url: '//' + window.location.hostname + ':8080/action/status',
+        success: function(result) {
+          cueStatus = result;
+          updateBoard();
+        },
+        complete: function() {
+          window.setTimeout(getStatus, 2000);
+        }
+      });
+    }
+    function getShowStatus() {
+      $.ajax({
+        url: '//' + window.location.hostname + ':8080/show/status',
+        success: function(result) {
+          showStatus = result;
+          updateShow();
+        },
+        complete: function() {
+          window.setTimeout(getShowStatus, 500);
+        }
+      });
+    }
+    function adcToStatus(adc) {
+      if (adc < 100 || adc > 900) {
+        return 'bad';
+      }
+      return 'good';
+    }
+    function updateBoard() {
+      div = '';
+      $.each(cueStatus, function(cue, info) {
+        div += '<div class="cue" id="cue' + cue + '">'; 
+        div += '<div class="status-' + adcToStatus(info['adc']) + '" onclick="js:select(' + cue + ')">';
+        div += '<span class="name">' + info['name'] + '</span>';
+        div += '<div class="select" onclick="js:select(' + cue + ')"></div>';
+        div += '<br/>';
+        div += '</div>';
+        div += '</div>';
+      });
+      $('#content').html(div);
+    }
+    function updateShow() {
+      if (showStatus['status'] == 'finished!' || showStatus['status'] == 'estop') {
+        $('#showReset').show();
+      } else {
+        $('#showReset').hide();
+      }
+      if (showStatus['status'] == 'running') {
+        $('#estop').show();
+        $('#estop').prop('disabled', false);
+	$('#showStart').hide();
+	$('#armSafe').hide();
+      } else {
+        $('#estop').hide();
+	$('#showStart').show();
+	$('#armSafe').show();
+        $('#armSafe').prop('disabled', false);
+      }
+      $('#showStatus').html('Show Status: ' + showStatus['status']);
+      $('#showLastFired').html('Cue Fired: ' + showStatus['firedCue']);
+      $('#showNext').html('Next Cue: ' + showStatus['nextCue']);
+      $('#showWaitTime').html('Waiting for ' + showStatus['waitingFor'] + ' seconds');
+    }
+    function showArm() {
+      $('#showStart').prop('disabled', false);
+      $('#showReset').prop('disabled', false);
+      $('#armSafe').off('click').click(showSafe).html('Safe');
+    }
+    function showSafe() {
+      $('#showStart').prop('disabled', true);
+      $('#showReset').prop('disabled', true);
+      $('#armSafe').off('click').click(showArm).html('Arm');
+    }
+    function showStart() {
+      showSafe();
+      $.ajax({
+        type: 'POST',
+        url: '//' + window.location.hostname + ':8080/show/start',
+        success: function(result) {
+          showStatus = result;
+          updateShow();
+        }
+      });
+    }
+    function showReset() {
+      $('#showReset').prop('disabled', true);
+      showSafe();
+      $.ajax({
+        type: 'POST',
+        url: '//' + window.location.hostname + ':8080/show/reset'
+      });
+    }
+    function showEstop() {
+      $('#estop').prop('disabled', true);
+      $.ajax({
+        type: 'POST',
+        url: '//' + window.location.hostname + ':8080/show/eStop',
+        success: function(result) {
+          showStatus = result;
+          updateShow();
+        }
+      });
+    }
+    function init() {
+      getStatus();
+      getShowStatus();
+      $('#armSafe').click(showArm);
+    }
+
+
+    window.onload = init;
+  </script>
+  <div id="header">
+    <div class="left">
+      <div id="name">{name}</div>
+      <div id="status">{status}</div>
+      <div id="adc">{adc}</div>
+    </div>
+    <div class="center">
+      <div>
+        <div id="showStatus"></div>
+        <div id="showLastFired"></div>
+        <div id="showNext"></div>
+        <div id="showWaitTime"></div>
+      </div>
+      <div>
+        <button id="armSafe" disabled>Arm</button> 
+        <button id="showReset" onclick="js:showReset();" disabled class="hidden">Reset</button>
+        <button id="showStart" onclick="js:showStart();" disabled>Start Show</button> 
+        <button id="estop" onclick="js:showEstop();" class="hidden">eStop</button>
+      </div>
+    </div>
+    <div class="right">
+      <button onclick="js:fire();">Fire!</button> 
+    </div>
+    <div class="clear"></div>
+  </div>
+  <hr/>
+  <div id="content">
+     
+  </div>
+</body>
+</html>
