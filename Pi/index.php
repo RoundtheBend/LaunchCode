@@ -3,12 +3,6 @@
 		<title>Fireworks!</title>
 		
 		<style type="text/css">
-		body {
-			color:#000000;
-			background-color: #FFFFFF;
-			background-image: url('images/USA-Flag-Waving.png');
-		}
-		
 		.fw {
 			display: inline-block;
 			text-align: center;
@@ -17,26 +11,16 @@
 			height: 120px;
 		}
 		
-		.header {
-			width: 100%;
-			height: 200px;		
-		}
-
 		.content {
-			position: absolute;
 			display: inline-block;
 			text-align: center;
-			/*margin: 0 auto;
-			top: 240px;
-			bottom: 0px;*/
-			width: 100%;
-			height: 100%;
-			overflow-y: scroll;		
 		}
 		
 		.select {
 			width: 64px;
 			height: 64px;		
+			margin: auto;
+			background-color: black;
 		}
 		
 		.current {
@@ -45,30 +29,18 @@
 			font-size: large;		
 		}
 		
-		.status-good {
-			border-color: green;
-			border-width: 3;
-			border-style: solid;
+		.status-good > .select {
+			background-color: green;
 		}
 
-		.status-bad {
-			border-color: red;
-			border-width: 3;
-			border-style: dashed;
-		}		
-
-		.status-launching {
-			border-color: yellow;
-			border-width: 3;
-			border-style: dotted;
+		.status-bad > .select {
+			background-color: red;
 		}
 
-		.status-launched {
-			border-color: gray;
-			border-width: 3;
-			border-style: double;
+		.status-launching > .select {
+			background-color: yellow;
 		}
-		
+
 		.ident {
 			position: absolute;
 			font-size: 24px;
@@ -87,7 +59,6 @@
 	<body>
 		<script type="text/javascript">
 			var ua = window.navigator.userAgent;
-			var msie = ua.indexOf("MSIE ");
 			var CURID = -1;
 			
 			function sendCommand() {
@@ -98,8 +69,6 @@
 				
 				xmlHttp.open("GET", "serial.php?req=[L" + CURID + "]", true);
 				xmlHttp.send(null);
-				
-				//alert("Launched! " + CURID);
 				
 				CURID = -1;
 			}
@@ -127,21 +96,19 @@
 				
 				xhr.open("GET", "serial.php?req=[S]", true);
 				xhr.send(null);
-				setTimeout(getStatus, 1000);
+				setTimeout(getStatus, 10000);
 			}
 			
 			function setCurrent(id) {
-				var curImageElem = document.getElementById("currentImage");
 				var curNameElem = document.getElementById("currentName");
 				var curStatusElem = document.getElementById("currentStatus");
 				var curOhmsElem = document.getElementById("currentOhms");
 				var launchButtonElem = document.getElementById("launchButton");
 				var div = document.getElementById("fw" + id);
 				
-				curImageElem.src = div.childNodes[0].childNodes[1].src;
-				curNameElem.innerHTML = div.childNodes[0].childNodes[3].innerHTML;
-				curStatusElem.innerHTML = div.childNodes[0].childNodes[4].innerHTML;
-				curOhmsElem.innerHTML = "(" + div.childNodes[0].childNodes[5].innerHTML + ")";
+				curNameElem.innerHTML = div.childNodes[0].childNodes[0].innerHTML;
+				curStatusElem.innerHTML = div.childNodes[0].childNodes[3].innerHTML;
+				curOhmsElem.innerHTML = "(" + div.childNodes[0].childNodes[4].innerHTML + ")";
 				
 				CURID = id;				
 			}
@@ -151,44 +118,23 @@
 				
 				if (div) {
 					div.childNodes[0].className = "status-" + status;
-					div.childNodes[0].childNodes[4].innerHTML = status;
-					div.childNodes[0].childNodes[5].innerHTML = ohms;
+					div.childNodes[0].childNodes[3].innerHTML = status;
+					div.childNodes[0].childNodes[4].innerHTML = ohms;
 				}
 			}
 			
 			function init() {
-				resizeContent();
-				//getStatus();
-				
 				setTimeout(getStatus, 1000);
 			}
 			
-			function resizeContent() {
-				var div = document.getElementById("content");
-				//var div2 = document.getElementById("currentOhms");
-				//div2.innerHTML = window.innerHeight;
-				
-				if (msie > 0)
-					div.style.height = (document.body.clientHeight - 240) + "px";
-				else
-					div.style.height = (window.innerHeight - 240) + "px";
-			}
-			
 			window.onload = init;
-			window.onresize = function () {
-				setTimeout(resizeContent, 250);
-			}
 		</script>
-		<!--<h1 style="text-align: center;">Fireworks!</h1>-->
 		<div class="header" id="header">
 			<table style="width: 100%;">
 				<tr>
 					<td style="text-align: center; valign: center; width: 50%;">
 						<table>
 							<tr>
-								<td>
-									<img id="currentImage" style="width: 160px; height: 160px;" src="images/unknown.png" alt="">
-								</td>
 								<td>
 									<table>
 										<tr>
@@ -212,7 +158,7 @@
 						</table>
 					</td>
 					<td style="text-align: center; valign: center; width: 50%;" rowspan="3">
-						<img id="launchButton" src="images/launch.png" onclick="javascript:sendCommand();"/>					
+						<button onclick="javascript:sendCommand();">Fire!</button>
 					</td>
 				</tr>
 			</table>
@@ -221,26 +167,25 @@
 		<hr/>
 		<div class="content" id="content">
 		<?php
-			$file_handle = fopen("fw2014.txt", "r");
+			$file_handle = fopen("fw2015.txt", "r");
 			
 			while(!feof($file_handle)) {
-				$line = fgets($file_handle);
+				$line = trim(fgets($file_handle));
 				
-				list($num, $id, $name, $image) = explode(",", $line);
+				$split = explode(",", $line);
 				
-				if (strlen($name) > 0)
-					echo generateDiv($num, $id, $name, $image);
+				if (count($split) == 2)
+					echo generateDiv($split[0], $split[1]);
 			}
 			
 			fclose($file_handle);
 			
-			function generateDiv($num, $id, $name, $image) {
+			function generateDiv($num, $id) {
 				$div = '<div class="fw" id="fw' . $id . '">';
 				$div .= '<div>';
 				$div .= '<span class="ident">' . $num . '</span>';
-				$div .= '<img class="select" id="fwimg' . $id . '" src="images/' . $image . '" onclick="javascript:setCurrent(\'' . $id . '\')" />';
-				$div .= '<br/>';				
-				$div .= '<span id="fwname' . $id . '">' . $name . '</span>';
+				$div .= '<div class="select" onclick="javascript:setCurrent(\'' . $id . '\')"></div>';
+				$div .= '<br/>';
 				$div .= '<div class="hidden" id="fw' . $id . '-status"></div>';
 				$div .= '<div class="hidden" id="fw' . $id . '-ohms"></div>';
 				$div .= '</div>';
