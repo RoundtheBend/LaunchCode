@@ -75,7 +75,7 @@
       if (selected != -1) {
         $.ajax({
           type: 'POST',
-          url: '//' + window.location.hostname + ':8080/action/fire',
+          url: '/action/fire',
           data: JSON.stringify({'cue': selected})
         });
         selected = -1; 
@@ -89,7 +89,7 @@
     }
     function getStatus() {
       $.ajax({
-        url: '//' + window.location.hostname + ':8080/action/status',
+        url: '/action/status',
         success: function(result) {
           cueStatus = result;
           updateBoard();
@@ -101,7 +101,7 @@
     }
     function getShowStatus() {
       $.ajax({
-        url: '//' + window.location.hostname + ':8080/show/status',
+        url: '/show/status',
         success: function(result) {
           showStatus = result;
           updateShow();
@@ -166,7 +166,7 @@
       showSafe();
       $.ajax({
         type: 'POST',
-        url: '//' + window.location.hostname + ':8080/show/start',
+        url: '/show/start',
         success: function(result) {
           showStatus = result;
           updateShow();
@@ -178,14 +178,14 @@
       showSafe();
       $.ajax({
         type: 'POST',
-        url: '//' + window.location.hostname + ':8080/show/reset'
+        url: '/show/reset'
       });
     }
     function showEstop() {
       $('#estop').prop('disabled', true);
       $.ajax({
         type: 'POST',
-        url: '//' + window.location.hostname + ':8080/show/eStop',
+        url: '/show/eStop',
         success: function(result) {
           showStatus = result;
           updateShow();
