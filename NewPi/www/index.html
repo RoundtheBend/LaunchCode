@@ -81,6 +81,12 @@
         selected = -1; 
       }
     }
+    function initialize() {
+      $.ajax({
+	type: 'POST',
+	url: '/action/initialize'
+      });
+    }
     function select(cue) {
       selected = cue;
       $('#name').html(cueStatus[cue]['name']);
@@ -206,6 +212,9 @@
       <div id="name">{name}</div>
       <div id="status">{status}</div>
       <div id="adc">{adc}</div>
+      <div>
+	<button id="initialize" onclick="js:initialize();">Init</button>
+      </div>
     </div>
     <div class="center">
       <div>
